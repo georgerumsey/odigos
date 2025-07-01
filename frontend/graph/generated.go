@@ -148,6 +148,10 @@ type ComplexityRoot struct {
 		RuntimeVersion func(childComplexity int) int
 	}
 
+	CustomInstrumentations struct {
+		Probes func(childComplexity int) int
+	}
+
 	CustomReadDataLabel struct {
 		Condition func(childComplexity int) int
 		Title     func(childComplexity int) int
@@ -274,6 +278,7 @@ type ComplexityRoot struct {
 
 	InstrumentationRule struct {
 		CodeAttributes           func(childComplexity int) int
+		CustomInstrumentations   func(childComplexity int) int
 		Disabled                 func(childComplexity int) int
 		HeadersCollection        func(childComplexity int) int
 		InstrumentationLibraries func(childComplexity int) int
@@ -491,6 +496,11 @@ type ComplexityRoot struct {
 		Type    func(childComplexity int) int
 	}
 
+	Probe struct {
+		ClassName  func(childComplexity int) int
+		MethodName func(childComplexity int) int
+	}
+
 	Query struct {
 		ComputePlatform       func(childComplexity int) int
 		Config                func(childComplexity int) int
@@ -498,6 +508,7 @@ type ComplexityRoot struct {
 		DescribeSource        func(childComplexity int, namespace string, kind string, name string) int
 		DestinationCategories func(childComplexity int) int
 		GetOverviewMetrics    func(childComplexity int) int
+		GetServiceMap         func(childComplexity int) int
 		PotentialDestinations func(childComplexity int) int
 		SourceConditions      func(childComplexity int) int
 	}
@@ -515,6 +526,21 @@ type ComplexityRoot struct {
 	RuntimeInfoAnalyze struct {
 		Containers func(childComplexity int) int
 		Generation func(childComplexity int) int
+	}
+
+	ServiceMap struct {
+		Services func(childComplexity int) int
+	}
+
+	ServiceMapFromSource struct {
+		ServiceName func(childComplexity int) int
+		Services    func(childComplexity int) int
+	}
+
+	ServiceMapToSource struct {
+		DateTime    func(childComplexity int) int
+		Requests    func(childComplexity int) int
+		ServiceName func(childComplexity int) int
 	}
 
 	ServiceNameFilters struct {
@@ -645,6 +671,7 @@ type QueryResolver interface {
 	DestinationCategories(ctx context.Context) (*model.GetDestinationCategories, error)
 	PotentialDestinations(ctx context.Context) ([]*model.DestinationDetails, error)
 	GetOverviewMetrics(ctx context.Context) (*model.OverviewMetricsResponse, error)
+	GetServiceMap(ctx context.Context) (*model.ServiceMap, error)
 	DescribeOdigos(ctx context.Context) (*model.OdigosAnalyze, error)
 	DescribeSource(ctx context.Context, namespace string, kind string, name string) (*model.SourceAnalyze, error)
 	SourceConditions(ctx context.Context) ([]*model.SourceConditions, error)
@@ -1124,6 +1151,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ContainerRuntimeInfoAnalyze.RuntimeVersion(childComplexity), true
+
+	case "CustomInstrumentations.probes":
+		if e.complexity.CustomInstrumentations.Probes == nil {
+			break
+		}
+
+		return e.complexity.CustomInstrumentations.Probes(childComplexity), true
 
 	case "CustomReadDataLabel.condition":
 		if e.complexity.CustomReadDataLabel.Condition == nil {
@@ -1621,6 +1655,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.InstrumentationRule.CodeAttributes(childComplexity), true
+
+	case "InstrumentationRule.customInstrumentations":
+		if e.complexity.InstrumentationRule.CustomInstrumentations == nil {
+			break
+		}
+
+		return e.complexity.InstrumentationRule.CustomInstrumentations(childComplexity), true
 
 	case "InstrumentationRule.disabled":
 		if e.complexity.InstrumentationRule.Disabled == nil {
@@ -2687,6 +2728,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ProbabilisticSamplerAction.Type(childComplexity), true
 
+	case "Probe.className":
+		if e.complexity.Probe.ClassName == nil {
+			break
+		}
+
+		return e.complexity.Probe.ClassName(childComplexity), true
+
+	case "Probe.methodName":
+		if e.complexity.Probe.MethodName == nil {
+			break
+		}
+
+		return e.complexity.Probe.MethodName(childComplexity), true
+
 	case "Query.computePlatform":
 		if e.complexity.Query.ComputePlatform == nil {
 			break
@@ -2733,6 +2788,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetOverviewMetrics(childComplexity), true
+
+	case "Query.getServiceMap":
+		if e.complexity.Query.GetServiceMap == nil {
+			break
+		}
+
+		return e.complexity.Query.GetServiceMap(childComplexity), true
 
 	case "Query.potentialDestinations":
 		if e.complexity.Query.PotentialDestinations == nil {
@@ -2810,6 +2872,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.RuntimeInfoAnalyze.Generation(childComplexity), true
+
+	case "ServiceMap.services":
+		if e.complexity.ServiceMap.Services == nil {
+			break
+		}
+
+		return e.complexity.ServiceMap.Services(childComplexity), true
+
+	case "ServiceMapFromSource.serviceName":
+		if e.complexity.ServiceMapFromSource.ServiceName == nil {
+			break
+		}
+
+		return e.complexity.ServiceMapFromSource.ServiceName(childComplexity), true
+
+	case "ServiceMapFromSource.services":
+		if e.complexity.ServiceMapFromSource.Services == nil {
+			break
+		}
+
+		return e.complexity.ServiceMapFromSource.Services(childComplexity), true
+
+	case "ServiceMapToSource.dateTime":
+		if e.complexity.ServiceMapToSource.DateTime == nil {
+			break
+		}
+
+		return e.complexity.ServiceMapToSource.DateTime(childComplexity), true
+
+	case "ServiceMapToSource.requests":
+		if e.complexity.ServiceMapToSource.Requests == nil {
+			break
+		}
+
+		return e.complexity.ServiceMapToSource.Requests(childComplexity), true
+
+	case "ServiceMapToSource.serviceName":
+		if e.complexity.ServiceMapToSource.ServiceName == nil {
+			break
+		}
+
+		return e.complexity.ServiceMapToSource.ServiceName(childComplexity), true
 
 	case "ServiceNameFilters.fallbackSamplingRatio":
 		if e.complexity.ServiceNameFilters.FallbackSamplingRatio == nil {
@@ -3206,6 +3310,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputActionInput,
 		ec.unmarshalInputCodeAttributesInput,
+		ec.unmarshalInputCustomInstrumentationsInput,
 		ec.unmarshalInputDataStreamInput,
 		ec.unmarshalInputDbQueryPayloadCollectionInput,
 		ec.unmarshalInputDestinationInput,
@@ -3225,6 +3330,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPersistNamespaceItemInput,
 		ec.unmarshalInputPersistNamespaceSourceInput,
 		ec.unmarshalInputPodWorkloadInput,
+		ec.unmarshalInputProbeInput,
 	)
 	first := true
 
@@ -6611,6 +6717,8 @@ func (ec *executionContext) fieldContext_ComputePlatform_instrumentationRules(_ 
 				return ec.fieldContext_InstrumentationRule_headersCollection(ctx, field)
 			case "payloadCollection":
 				return ec.fieldContext_InstrumentationRule_payloadCollection(ctx, field)
+			case "customInstrumentations":
+				return ec.fieldContext_InstrumentationRule_customInstrumentations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type InstrumentationRule", field.Name)
 		},
@@ -7349,6 +7457,53 @@ func (ec *executionContext) fieldContext_ContainerRuntimeInfoAnalyze_envVars(_ c
 				return ec.fieldContext_EntityProperty_explain(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type EntityProperty", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomInstrumentations_probes(ctx context.Context, field graphql.CollectedField, obj *model.CustomInstrumentations) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomInstrumentations_probes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Probes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Probe)
+	fc.Result = res
+	return ec.marshalOProbe2ᚕᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐProbe(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomInstrumentations_probes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomInstrumentations",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "className":
+				return ec.fieldContext_Probe_className(ctx, field)
+			case "methodName":
+				return ec.fieldContext_Probe_methodName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Probe", field.Name)
 		},
 	}
 	return fc, nil
@@ -11056,6 +11211,51 @@ func (ec *executionContext) fieldContext_InstrumentationRule_payloadCollection(_
 	return fc, nil
 }
 
+func (ec *executionContext) _InstrumentationRule_customInstrumentations(ctx context.Context, field graphql.CollectedField, obj *model.InstrumentationRule) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InstrumentationRule_customInstrumentations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CustomInstrumentations, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.CustomInstrumentations)
+	fc.Result = res
+	return ec.marshalOCustomInstrumentations2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐCustomInstrumentations(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InstrumentationRule_customInstrumentations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InstrumentationRule",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "probes":
+				return ec.fieldContext_CustomInstrumentations_probes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CustomInstrumentations", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _InstrumentationSourcesAnalyze_instrumented(ctx context.Context, field graphql.CollectedField, obj *model.InstrumentationSourcesAnalyze) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_InstrumentationSourcesAnalyze_instrumented(ctx, field)
 	if err != nil {
@@ -13862,6 +14062,8 @@ func (ec *executionContext) fieldContext_Mutation_createInstrumentationRule(ctx 
 				return ec.fieldContext_InstrumentationRule_headersCollection(ctx, field)
 			case "payloadCollection":
 				return ec.fieldContext_InstrumentationRule_payloadCollection(ctx, field)
+			case "customInstrumentations":
+				return ec.fieldContext_InstrumentationRule_customInstrumentations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type InstrumentationRule", field.Name)
 		},
@@ -13943,6 +14145,8 @@ func (ec *executionContext) fieldContext_Mutation_updateInstrumentationRule(ctx 
 				return ec.fieldContext_InstrumentationRule_headersCollection(ctx, field)
 			case "payloadCollection":
 				return ec.fieldContext_InstrumentationRule_payloadCollection(ctx, field)
+			case "customInstrumentations":
+				return ec.fieldContext_InstrumentationRule_customInstrumentations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type InstrumentationRule", field.Name)
 		},
@@ -17432,6 +17636,88 @@ func (ec *executionContext) fieldContext_ProbabilisticSamplerAction_details(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _Probe_className(ctx context.Context, field graphql.CollectedField, obj *model.Probe) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Probe_className(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClassName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Probe_className(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Probe",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Probe_methodName(ctx context.Context, field graphql.CollectedField, obj *model.Probe) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Probe_methodName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MethodName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Probe_methodName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Probe",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_computePlatform(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_computePlatform(ctx, field)
 	if err != nil {
@@ -17686,6 +17972,54 @@ func (ec *executionContext) fieldContext_Query_getOverviewMetrics(_ context.Cont
 				return ec.fieldContext_OverviewMetricsResponse_destinations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type OverviewMetricsResponse", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getServiceMap(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getServiceMap(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetServiceMap(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ServiceMap)
+	fc.Result = res
+	return ec.marshalNServiceMap2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMap(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getServiceMap(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "services":
+				return ec.fieldContext_ServiceMap_services(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ServiceMap", field.Name)
 		},
 	}
 	return fc, nil
@@ -18422,6 +18756,284 @@ func (ec *executionContext) fieldContext_RuntimeInfoAnalyze_containers(_ context
 				return ec.fieldContext_ContainerRuntimeInfoAnalyze_envVars(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ContainerRuntimeInfoAnalyze", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServiceMap_services(ctx context.Context, field graphql.CollectedField, obj *model.ServiceMap) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServiceMap_services(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Services, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ServiceMapFromSource)
+	fc.Result = res
+	return ec.marshalNServiceMapFromSource2ᚕᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMapFromSourceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServiceMap_services(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServiceMap",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "serviceName":
+				return ec.fieldContext_ServiceMapFromSource_serviceName(ctx, field)
+			case "services":
+				return ec.fieldContext_ServiceMapFromSource_services(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ServiceMapFromSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServiceMapFromSource_serviceName(ctx context.Context, field graphql.CollectedField, obj *model.ServiceMapFromSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServiceMapFromSource_serviceName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServiceName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServiceMapFromSource_serviceName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServiceMapFromSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServiceMapFromSource_services(ctx context.Context, field graphql.CollectedField, obj *model.ServiceMapFromSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServiceMapFromSource_services(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Services, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ServiceMapToSource)
+	fc.Result = res
+	return ec.marshalNServiceMapToSource2ᚕᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMapToSourceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServiceMapFromSource_services(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServiceMapFromSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "serviceName":
+				return ec.fieldContext_ServiceMapToSource_serviceName(ctx, field)
+			case "requests":
+				return ec.fieldContext_ServiceMapToSource_requests(ctx, field)
+			case "dateTime":
+				return ec.fieldContext_ServiceMapToSource_dateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ServiceMapToSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServiceMapToSource_serviceName(ctx context.Context, field graphql.CollectedField, obj *model.ServiceMapToSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServiceMapToSource_serviceName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServiceName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServiceMapToSource_serviceName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServiceMapToSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServiceMapToSource_requests(ctx context.Context, field graphql.CollectedField, obj *model.ServiceMapToSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServiceMapToSource_requests(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Requests, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServiceMapToSource_requests(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServiceMapToSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServiceMapToSource_dateTime(ctx context.Context, field graphql.CollectedField, obj *model.ServiceMapToSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServiceMapToSource_dateTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DateTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServiceMapToSource_dateTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServiceMapToSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -23005,6 +23617,33 @@ func (ec *executionContext) unmarshalInputCodeAttributesInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCustomInstrumentationsInput(ctx context.Context, obj any) (model.CustomInstrumentationsInput, error) {
+	var it model.CustomInstrumentationsInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"probes"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "probes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("probes"))
+			data, err := ec.unmarshalOProbeInput2ᚕᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐProbeInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Probes = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDataStreamInput(ctx context.Context, obj any) (model.DataStreamInput, error) {
 	var it model.DataStreamInput
 	asMap := map[string]any{}
@@ -23312,7 +23951,7 @@ func (ec *executionContext) unmarshalInputInstrumentationRuleInput(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"ruleName", "notes", "disabled", "workloads", "instrumentationLibraries", "codeAttributes", "headersCollection", "payloadCollection"}
+	fieldsInOrder := [...]string{"ruleName", "notes", "disabled", "workloads", "instrumentationLibraries", "codeAttributes", "headersCollection", "payloadCollection", "customInstrumentations"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -23375,6 +24014,13 @@ func (ec *executionContext) unmarshalInputInstrumentationRuleInput(ctx context.C
 				return it, err
 			}
 			it.PayloadCollection = data
+		case "customInstrumentations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customInstrumentations"))
+			data, err := ec.unmarshalOCustomInstrumentationsInput2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐCustomInstrumentationsInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomInstrumentations = data
 		}
 	}
 
@@ -23778,6 +24424,40 @@ func (ec *executionContext) unmarshalInputPodWorkloadInput(ctx context.Context, 
 				return it, err
 			}
 			it.Name = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputProbeInput(ctx context.Context, obj any) (model.ProbeInput, error) {
+	var it model.ProbeInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"className", "methodName"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "className":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("className"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClassName = data
+		case "methodName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("methodName"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MethodName = data
 		}
 	}
 
@@ -24792,6 +25472,42 @@ func (ec *executionContext) _ContainerRuntimeInfoAnalyze(ctx context.Context, se
 	return out
 }
 
+var customInstrumentationsImplementors = []string{"CustomInstrumentations"}
+
+func (ec *executionContext) _CustomInstrumentations(ctx context.Context, sel ast.SelectionSet, obj *model.CustomInstrumentations) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, customInstrumentationsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CustomInstrumentations")
+		case "probes":
+			out.Values[i] = ec._CustomInstrumentations_probes(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var customReadDataLabelImplementors = []string{"CustomReadDataLabel"}
 
 func (ec *executionContext) _CustomReadDataLabel(ctx context.Context, sel ast.SelectionSet, obj *model.CustomReadDataLabel) graphql.Marshaler {
@@ -25753,6 +26469,8 @@ func (ec *executionContext) _InstrumentationRule(ctx context.Context, sel ast.Se
 			out.Values[i] = ec._InstrumentationRule_headersCollection(ctx, field, obj)
 		case "payloadCollection":
 			out.Values[i] = ec._InstrumentationRule_payloadCollection(ctx, field, obj)
+		case "customInstrumentations":
+			out.Values[i] = ec._InstrumentationRule_customInstrumentations(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -27233,6 +27951,44 @@ func (ec *executionContext) _ProbabilisticSamplerAction(ctx context.Context, sel
 	return out
 }
 
+var probeImplementors = []string{"Probe"}
+
+func (ec *executionContext) _Probe(ctx context.Context, sel ast.SelectionSet, obj *model.Probe) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, probeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Probe")
+		case "className":
+			out.Values[i] = ec._Probe_className(ctx, field, obj)
+		case "methodName":
+			out.Values[i] = ec._Probe_methodName(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -27341,6 +28097,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getOverviewMetrics(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getServiceMap":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getServiceMap(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -27531,6 +28309,138 @@ func (ec *executionContext) _RuntimeInfoAnalyze(ctx context.Context, sel ast.Sel
 			}
 		case "containers":
 			out.Values[i] = ec._RuntimeInfoAnalyze_containers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var serviceMapImplementors = []string{"ServiceMap"}
+
+func (ec *executionContext) _ServiceMap(ctx context.Context, sel ast.SelectionSet, obj *model.ServiceMap) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serviceMapImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServiceMap")
+		case "services":
+			out.Values[i] = ec._ServiceMap_services(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var serviceMapFromSourceImplementors = []string{"ServiceMapFromSource"}
+
+func (ec *executionContext) _ServiceMapFromSource(ctx context.Context, sel ast.SelectionSet, obj *model.ServiceMapFromSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serviceMapFromSourceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServiceMapFromSource")
+		case "serviceName":
+			out.Values[i] = ec._ServiceMapFromSource_serviceName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "services":
+			out.Values[i] = ec._ServiceMapFromSource_services(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var serviceMapToSourceImplementors = []string{"ServiceMapToSource"}
+
+func (ec *executionContext) _ServiceMapToSource(ctx context.Context, sel ast.SelectionSet, obj *model.ServiceMapToSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serviceMapToSourceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServiceMapToSource")
+		case "serviceName":
+			out.Values[i] = ec._ServiceMapToSource_serviceName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requests":
+			out.Values[i] = ec._ServiceMapToSource_requests(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dateTime":
+			out.Values[i] = ec._ServiceMapToSource_dateTime(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -30161,6 +31071,128 @@ func (ec *executionContext) marshalNRuntimeInfoAnalyze2ᚖgithubᚗcomᚋodigos�
 	return ec._RuntimeInfoAnalyze(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNServiceMap2githubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMap(ctx context.Context, sel ast.SelectionSet, v model.ServiceMap) graphql.Marshaler {
+	return ec._ServiceMap(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNServiceMap2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMap(ctx context.Context, sel ast.SelectionSet, v *model.ServiceMap) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ServiceMap(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNServiceMapFromSource2ᚕᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMapFromSourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ServiceMapFromSource) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNServiceMapFromSource2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMapFromSource(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNServiceMapFromSource2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMapFromSource(ctx context.Context, sel ast.SelectionSet, v *model.ServiceMapFromSource) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ServiceMapFromSource(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNServiceMapToSource2ᚕᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMapToSourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ServiceMapToSource) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNServiceMapToSource2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMapToSource(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNServiceMapToSource2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceMapToSource(ctx context.Context, sel ast.SelectionSet, v *model.ServiceMapToSource) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ServiceMapToSource(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNServiceNameFilters2ᚕᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐServiceNameFiltersᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ServiceNameFilters) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -30943,6 +31975,21 @@ func (ec *executionContext) marshalOCondition2ᚕᚖgithubᚗcomᚋodigosᚑio�
 	return ret
 }
 
+func (ec *executionContext) marshalOCustomInstrumentations2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐCustomInstrumentations(ctx context.Context, sel ast.SelectionSet, v *model.CustomInstrumentations) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CustomInstrumentations(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOCustomInstrumentationsInput2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐCustomInstrumentationsInput(ctx context.Context, v any) (*model.CustomInstrumentationsInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCustomInstrumentationsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalODbQueryPayloadCollection2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐDbQueryPayloadCollection(ctx context.Context, sel ast.SelectionSet, v *model.DbQueryPayloadCollection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -31211,6 +32258,80 @@ func (ec *executionContext) unmarshalOPodWorkloadInput2ᚕᚖgithubᚗcomᚋodig
 		}
 	}
 	return res, nil
+}
+
+func (ec *executionContext) marshalOProbe2ᚕᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐProbe(ctx context.Context, sel ast.SelectionSet, v []*model.Probe) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOProbe2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐProbe(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOProbe2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐProbe(ctx context.Context, sel ast.SelectionSet, v *model.Probe) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Probe(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOProbeInput2ᚕᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐProbeInput(ctx context.Context, v any) ([]*model.ProbeInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*model.ProbeInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOProbeInput2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐProbeInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalOProbeInput2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐProbeInput(ctx context.Context, v any) (*model.ProbeInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProbeInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOProgrammingLanguage2ᚖgithubᚗcomᚋodigosᚑioᚋodigosᚋfrontendᚋgraphᚋmodelᚐProgrammingLanguage(ctx context.Context, v any) (*model.ProgrammingLanguage, error) {

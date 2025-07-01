@@ -36,7 +36,7 @@ var configCmd = &cobra.Command{
 	- "%s": Skips webhook issuer creation (true/false).
 	- "%s": Allows concurrent agents (true/false).
 	- "%s": Sets the image prefix.
-	- "%s": Sets the UI mode (normal/readonly).
+	- "%s": Sets the UI mode (default/readonly).
 	- "%s": Controls the number of items to fetch per paginated-batch in the UI.
 	- "%s": Sets the public URL of a remotely, self-hosted UI.
 	- "%s": Sets the URL of the Odigos Central Backend.
@@ -57,6 +57,8 @@ var configCmd = &cobra.Command{
 	- "%s": Sets the URL of the OIDC tenant.
 	- "%s": Sets the client ID of the OIDC application.
 	- "%s": Sets the client secret of the OIDC application.
+	- "%s": Sets the port for the Odiglet health probes (readiness/liveness).
+  	- "%s": Enable or disable the service graph feature [default: false].
 	`,
 		consts.TelemetryEnabledProperty,
 		consts.OpenshiftEnabledProperty,
@@ -85,6 +87,8 @@ var configCmd = &cobra.Command{
 		consts.OidcTenantUrlProperty,
 		consts.OidcClientIdProperty,
 		consts.OidcClientSecretProperty,
+		consts.OdigletHealthProbeBindPortProperty,
+		consts.ServiceGraphDisabledProperty,
 	),
 }
 
@@ -186,7 +190,9 @@ func validatePropertyValue(property string, value []string) error {
 		consts.AutomaticRolloutDisabledProperty,
 		consts.OidcTenantUrlProperty,
 		consts.OidcClientIdProperty,
-		consts.OidcClientSecretProperty:
+		consts.OidcClientSecretProperty,
+		consts.OdigletHealthProbeBindPortProperty,
+		consts.ServiceGraphDisabledProperty:
 
 		if len(value) != 1 {
 			return fmt.Errorf("%s expects exactly one value", property)
@@ -200,13 +206,15 @@ func validatePropertyValue(property string, value []string) error {
 			consts.AllowConcurrentAgentsProperty,
 			consts.KarpenterEnabledProperty,
 			consts.RollbackDisabledProperty,
-			consts.AutomaticRolloutDisabledProperty:
+			consts.AutomaticRolloutDisabledProperty,
+			consts.ServiceGraphDisabledProperty:
 			_, err := strconv.ParseBool(value[0])
 			if err != nil {
 				return fmt.Errorf("invalid boolean value for %s: %s", property, value[0])
 			}
 
-		case consts.UiPaginationLimitProperty:
+		case consts.UiPaginationLimitProperty,
+			consts.OdigletHealthProbeBindPortProperty:
 			_, err := strconv.Atoi(value[0])
 			if err != nil {
 				return fmt.Errorf("invalid integer value for %s: %s", property, value[0])
@@ -350,16 +358,25 @@ func setConfigProperty(ctx context.Context, client *kube.Client, config *common.
 		boolValue, _ := strconv.ParseBool(value[0])
 		config.Rollout.AutomaticRolloutDisabled = &boolValue
 
+	case consts.ServiceGraphDisabledProperty:
+		if config.CollectorGateway == nil {
+			config.CollectorGateway = &common.CollectorGatewayConfiguration{}
+		}
+		boolValue, _ := strconv.ParseBool(value[0])
+		config.CollectorGateway.ServiceGraphDisabled = &boolValue
+
 	case consts.OidcTenantUrlProperty:
 		if config.Oidc == nil {
 			config.Oidc = &common.OidcConfiguration{}
 		}
 		config.Oidc.TenantUrl = value[0]
+
 	case consts.OidcClientIdProperty:
 		if config.Oidc == nil {
 			config.Oidc = &common.OidcConfiguration{}
 		}
 		config.Oidc.ClientId = value[0]
+
 	case consts.OidcClientSecretProperty:
 		// get existing secret, do not throw on not found
 		secret, err := client.CoreV1().Secrets(namespace).Get(ctx, consts.OidcSecretName, metav1.GetOptions{})
@@ -391,6 +408,10 @@ func setConfigProperty(ctx context.Context, client *kube.Client, config *common.
 			config.Oidc = &common.OidcConfiguration{}
 		}
 		config.Oidc.ClientSecret = fmt.Sprintf("secretRef:%s", consts.OidcSecretName)
+
+	case consts.OdigletHealthProbeBindPortProperty:
+		intValue, _ := strconv.Atoi(value[0])
+		config.OdigletHealthProbeBindPort = intValue
 
 	default:
 		return fmt.Errorf("invalid property: %s", property)
