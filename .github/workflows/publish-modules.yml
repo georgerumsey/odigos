@@ -58,7 +58,7 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}
           PR_LINKS: ${{ steps.verify.outputs.links }}
         run: |
-          pr_links_formatted=$(echo "$PR_LINKS" | jq -r '.[]' | awk '{print "- " $0}' | tr '\n' '\n')
+          pr_links_formatted=$(echo "$PR_LINKS" | tr ' ' '\n' | awk '{print "- " $0}' | tr '\n' '\n')
           curl -X POST -H 'Content-type: application/json' --data "{
             \"description\": \"❌ ERROR: Open offset PRs found in \`${{ matrix.repo }}\`\n\n$pr_links_formatted\",
             \"link\": \"https://github.com/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }}\",
@@ -113,15 +113,70 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}
           PR_LINKS: ${{ steps.verify.outputs.links }}
         run: |
-          pr_links_formatted=$(echo "$PR_LINKS" | jq -r '.[]' | awk '{print "- " $0}' | tr '\n' '\n')
+          pr_links_formatted=$(echo "$PR_LINKS" | tr ' ' '\n' | awk '{print "- " $0}' | tr '\n' '\n')
           curl -X POST -H 'Content-type: application/json' --data "{
             \"description\": \"❌ ERROR: Open depenencies-syncer-bot PRs found in \`${{ matrix.repo }}\`\n\n$pr_links_formatted\",
             \"link\": \"https://github.com/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }}\",
             \"tag\": \"verify-dependencies-sync-failure\"
           }" $SLACK_WEBHOOK_URL
 
-  print-tag:
+  verify-release-blockers:
     needs: verify-dependencies-sync
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repo: ['odigos', 'odigos-enterprise']
+    steps:
+      - name: Verify no open release-blocker PRs
+        id: verify
+        run: |
+          # Fetch open PRs and filter by "release-blocker" label
+          result=$(curl -s -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.RELEASE_BOT_TOKEN }}" \
+            "https://api.github.com/repos/odigos-io/${{ matrix.repo }}/pulls?state=open&per_page=100")
+
+          pr_links=$(echo "$result" \
+            | jq -r '[.[] | select(.labels | any(.name == "release-blocker")) | .html_url] | join(" ")')
+
+          count=$(echo "$pr_links" | wc -w)
+          if [ "$count" -gt 0 ]; then
+            # Write outputs to GITHUB_OUTPUT instead of using ::set-output
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "links=$pr_links" >> $GITHUB_OUTPUT
+            echo "❌ Error: Open PRs with label \"release-blocker\" found!" >&2
+            exit 1
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "✅ No open PRs with label \"release-blocker\"."
+          fi
+
+      - name: Notify Slack on Success
+        if: ${{ steps.verify.outputs.status == 'success' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ODIGOS_RELEASE_STATUS_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "description": "✅ No open release-blocker PRs in `${{ matrix.repo }}`",
+            "tag": "verify-release-blockers-success"
+          }' $SLACK_WEBHOOK_URL
+
+      - name: Notify Slack on Failure
+        if: ${{ failure() }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ODIGOS_RELEASE_STATUS_WEBHOOK_URL }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          PR_LINKS: ${{ steps.verify.outputs.links }}
+        run: |
+          pr_links_formatted=$(echo "$PR_LINKS" | tr ' ' '\n' | awk '{print "- " $0}' | tr '\n' '\n')
+          curl -X POST -H 'Content-type: application/json' --data "{
+            \"description\": \"❌ ERROR: Open release-blocker PRs found in \`${{ matrix.repo }}\`\n\n$pr_links_formatted\",
+            \"link\": \"https://github.com/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }}\",
+            \"tag\": \"verify-release-blockers-failure\"
+          }" $SLACK_WEBHOOK_URL
+
+  print-tag:
+    needs: verify-release-blockers
     runs-on: ubuntu-latest
     steps:
       - name: Extract Tag
@@ -135,7 +190,7 @@ jobs:
           curl -X POST -H 'Content-type: application/json' --data '{"description":"Detected new git tag. initializing a release", "tag":"${{ steps.extract_tag.outputs.tag }}"}' ${{ env.SLACK_WEBHOOK_URL }}
 
   tag-modules:
-    needs: verify-dependencies-sync
+    needs: verify-release-blockers
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -191,7 +246,7 @@ jobs:
           curl -X POST -H 'Content-type: application/json' --data '{"link":"https://github.com/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }}", "description":"ERROR: Odigos go modules release failed", "tag":"${{ steps.extract_tag.outputs.tag }}"}' ${{ env.SLACK_WEBHOOK_URL }}
 
   publish-images:
-    needs: verify-dependencies-sync
+    needs: verify-release-blockers
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -271,6 +326,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}  
+
       - name: Build and Push Docker Image for ${{ matrix.service }}
         uses: docker/build-push-action@v6
         env:
@@ -281,6 +343,7 @@ jobs:
           tags: |
             us-central1-docker.pkg.dev/odigos-cloud/components/odigos-${{ matrix.service }}${{ matrix.dockerfile == 'Dockerfile.rhel' && '-ubi9' || '' }}:${{ env.ODIGOS_TAG }}
             keyval/odigos-${{ matrix.service }}${{ matrix.dockerfile == 'Dockerfile.rhel' && '-ubi9' || '' }}:${{ env.ODIGOS_TAG }}
+            ghcr.io/odigos-io/odigos-${{ matrix.service }}${{ matrix.dockerfile == 'Dockerfile.rhel' && '-ubi9' || '' }}:${{ env.ODIGOS_TAG }}
           build-args: |
             SERVICE_NAME=${{ matrix.service }}
             ODIGOS_VERSION=${{ env.ODIGOS_TAG }}
@@ -313,7 +376,7 @@ jobs:
           curl -X POST -H 'Content-type: application/json' --data '{"link":"https://github.com/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }}", "description":"ERROR: odigos component ${{ matrix.service }} release failed", "tag":"${{ steps.extract_tag.outputs.tag }}"}' ${{ env.SLACK_WEBHOOK_URL }}
 
   publish-collector-linux-packages:
-    needs: verify-dependencies-sync
+    needs: verify-release-blockers
     runs-on: ubuntu-latest
     steps:
       - name: Extract Tag

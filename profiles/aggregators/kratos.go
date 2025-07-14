@@ -23,7 +23,10 @@ var KratosProfile = profile.Profile{
 		"allow_concurrent_agents",
 		"mount-method-k8s-host-path",
 		"reduce-span-name-cardinality",
-		"loader-fallback-to-pod-manifest-env-var-injection",
 		"disable-gin",
+	},
+	ModifyConfigFunc: func(config *common.OdigosConfiguration) {
+		rollbackDisabled := true
+		config.RollbackDisabled = &rollbackDisabled
 	},
 }

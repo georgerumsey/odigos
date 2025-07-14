@@ -25,6 +25,7 @@ func GetGatewayConfig(
 	return CalculateGatewayConfig(currentConfig, dests, processors, applySelfTelemetry, dataStreamsDetails, serviceGraphDisabled)
 }
 
+//nolint:funlen // This function handles complex gateway configuration logic that is difficult to break down further
 func CalculateGatewayConfig(
 	currentConfig *config.Config,
 	dests []config.ExporterConfigurer,
@@ -92,7 +93,7 @@ func CalculateGatewayConfig(
 			currentConfig.Connectors[connectorName] = config.GenericMap{}
 			pipeline := currentConfig.Service.Pipelines[pipelineName]
 			// add the forward connector as a receiver to the pipeline
-			pipeline.Receivers = []string{connectorName}
+			pipeline.Receivers = append(pipeline.Receivers, connectorName)
 			// every destination pipeline should have a generic batch processor
 			pipeline.Processors = []string{consts.GenericBatchProcessorConfigKey}
 
@@ -148,6 +149,7 @@ func CalculateGatewayConfig(
 	if tracesEnabled && !*serviceGraphDisabled {
 		insertServiceGraphPipeline(currentConfig)
 	}
+
 	// Final marshal to YAML
 	data, err := yaml.Marshal(currentConfig)
 	if err != nil {
@@ -190,7 +192,7 @@ func insertRootPipelinesToConfig(currentConfig *config.Config, dataStreamsDetail
 func applyRootPipelineForSignal(currentConfig *config.Config, signal common.ObservabilitySignal,
 	processors []string, dataStreamsDetails []DataStreams) {
 	rootPipelineName := GetTelemetryRootPipelineName(signal)
-	fullProcessors := append([]string{"memory_limiter", "resource/odigos-version"}, processors...)
+	fullProcessors := append([]string{"resource/odigos-version"}, processors...)
 
 	connectorName := fmt.Sprintf("odigosrouterconnector/%s", strings.ToLower(string(signal)))
 	currentConfig.Connectors[connectorName] = config.GenericMap{
@@ -264,6 +266,7 @@ func GetBasicConfig(memoryLimiterConfig config.GenericMap) *config.Config {
 								"max_connection_age_grace": consts.GatewayMaxConnectionAgeGrace,
 							},
 						},
+						"memory_limiter": consts.MemoryLimiterExtensionKey, // tells the receiver to check this "memory_limiter" extension when receiving data
 					},
 					// Node collectors send in gRPC, so this is probably not needed
 					"http": config.GenericMap{
@@ -273,7 +276,6 @@ func GetBasicConfig(memoryLimiterConfig config.GenericMap) *config.Config {
 			},
 		},
 		Processors: config.GenericMap{
-			"memory_limiter": memoryLimiterConfig,
 			"resource/odigos-version": config.GenericMap{
 				"attributes": []config.GenericMap{
 					{
@@ -283,9 +285,10 @@ func GetBasicConfig(memoryLimiterConfig config.GenericMap) *config.Config {
 					},
 				},
 			},
-			consts.GenericBatchProcessorConfigKey: config.GenericMap{}, // Currently configured with default values
+			consts.GenericBatchProcessorConfigKey: config.GenericMap{},
 		},
 		Extensions: config.GenericMap{
+			consts.MemoryLimiterExtensionKey: memoryLimiterConfig,
 			"health_check": config.GenericMap{
 				"endpoint": "0.0.0.0:13133",
 			},
@@ -296,7 +299,7 @@ func GetBasicConfig(memoryLimiterConfig config.GenericMap) *config.Config {
 		Exporters: map[string]interface{}{},
 		Service: config.Service{
 			Pipelines:  map[string]config.Pipeline{},
-			Extensions: []string{"health_check", "pprof"},
+			Extensions: []string{"health_check", "pprof", consts.MemoryLimiterExtensionKey},
 		},
 	}
 }

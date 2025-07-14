@@ -455,8 +455,30 @@ func NewOdigletDaemonSet(ns string, version string, imagePrefix string, imageNam
 										},
 									},
 								},
+								{
+									// let the Go runtime know how many CPUs are available,
+									// without this, Go will assume all the cores are available.
+									Name: "GOMAXPROCS",
+									ValueFrom: &corev1.EnvVarSource{
+										ResourceFieldRef: &corev1.ResourceFieldSelector{
+											ContainerName: "init",
+											// limitCPU, Kubernetes automatically rounds up the value to an integer
+											// (700m -> 1, 1200m -> 2)
+											Resource: "limits.cpu",
+										},
+									},
+								},
 							},
-							Resources: corev1.ResourceRequirements{},
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									"cpu":    resource.MustParse("200m"),
+									"memory": resource.MustParse("200Mi"),
+								},
+								Requests: corev1.ResourceList{
+									"cpu":    resource.MustParse("200m"),
+									"memory": resource.MustParse("200Mi"),
+								},
+							},
 							VolumeMounts: append([]corev1.VolumeMount{
 								{
 									Name:      "odigos",
@@ -475,6 +497,67 @@ func NewOdigletDaemonSet(ns string, version string, imagePrefix string, imageNam
 						},
 					},
 					Containers: []corev1.Container{
+						{
+							Name:  k8sconsts.OdigletDevicePluginContainerName,
+							Image: containers.GetImageName(imagePrefix, imageName, version),
+							Command: []string{
+								"/root/deviceplugin",
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: k8sconsts.NodeNameEnvVar,
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "spec.nodeName",
+										},
+									},
+								},
+								{
+									Name: "NODE_IP",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "status.hostIP",
+										},
+									},
+								},
+								{
+									Name: "CURRENT_NS",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.namespace",
+										},
+									},
+								},
+							},
+							Resources: corev1.ResourceRequirements{},
+							LivenessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									Exec: &corev1.ExecAction{
+										Command: []string{k8sconsts.GrpcHealthBinaryPath, "-addr=" + k8sconsts.GrpcHealthProbePath},
+									},
+								},
+								InitialDelaySeconds: 5,
+								FailureThreshold:    1,
+								PeriodSeconds:       10,
+							},
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									Exec: &corev1.ExecAction{
+										Command: []string{k8sconsts.GrpcHealthBinaryPath, "-addr=" + k8sconsts.GrpcHealthProbePath},
+									},
+								},
+								InitialDelaySeconds: 5,
+								FailureThreshold:    1,
+								PeriodSeconds:       10,
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "device-plugins-dir",
+									MountPath: "/var/lib/kubelet/device-plugins",
+								},
+							},
+							ImagePullPolicy: "IfNotPresent",
+						},
 						{
 							Name: k8sconsts.OdigletContainerName,
 							Command: []string{
@@ -560,10 +643,6 @@ func NewOdigletDaemonSet(ns string, version string, imagePrefix string, imageNam
 								{
 									Name:      "run-dir",
 									MountPath: "/run",
-								},
-								{
-									Name:      "device-plugins-dir",
-									MountPath: "/var/lib/kubelet/device-plugins",
 								},
 								{
 									Name:      "odigos",
